@@ -1,15 +1,22 @@
+
+import { db } from '../../firebase.config';
+import { collection, getDocs } from 'firebase/firestore';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { baseUrl } from '../../shared/baseUrl';
+import { mapImageURL } from '../../utils/mapImageURL';
 
 export const fetchPromotions = createAsyncThunk(
     'promotions/fetchPromotions',
     async () => {
-        const response = await fetch(baseUrl + 'promotions');
-        if (!response.ok) {
-            return Promise.reject('Unable to fetch, status: ' + response.status);
-        }
-        const data = await response.json();
-        return data;
+        const querySnapshot = await getDocs(collection(db, 'promotions'));
+        const promotions = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            promotions.push({ id: doc.id, ...data });
+        });
+        return promotions.map((promotion) => ({
+            ...promotion,
+            image: mapImageURL(promotion.image)
+        }));
     }
 );
 
